@@ -39,6 +39,8 @@ ZeaMays-Yield-Prediction-Benin/
 │   └── metadata/                      # Informations sur les sources de données
 │
 ├── notebooks/
+│   ├── 00_test_environnement.ipynb
+│   ├── 00b_download_nasa_power.ipynb
 │   ├── 01_exploratory_data_analysis.ipynb
 │   ├── 02_preprocessing.ipynb
 │   ├── 03_feature_engineering.ipynb
@@ -75,3 +77,15 @@ ZeaMays-Yield-Prediction-Benin/
 - **app/** : Application web Flask pour servir le modèle en production.
 - **reports/** : Visualisations et rapports générés tout au long du projet.
 - **src/** : Modules Python réutilisables partagés entre les notebooks.
+
+---
+
+## Travail réalisé (résumé)
+
+1. **Collecte des données climatiques** — téléchargement NASA POWER (mensuel, 2003-2022) pour les 12 départements, paramètres : précipitations, températures (moyenne/max/min), humidité et rayonnement.
+2. **Prétraitement des rendements** — extraction de la feuille "Maïs", sélection des départements, conversion kg/ha -> t/ha, harmonisation des noms (ex. Atakora/Atacora, Kouffo/Couffo).
+3. **Fusion climat + rendement** — jointure par département et année, sauvegarde du dataset final dans data/processed/dataset_final.csv.
+4. **Contrôle qualité et corrections** — identification des valeurs manquantes, exclusion du Littoral, correction des précipitations (mm/jour -> mm/mois) et recalcul de l'indice de stress hydrique.
+5. **Feature engineering** — cumul saisonnier des précipitations, amplitude thermique, stress thermique, variable temporelle normalisée et encodage des départements.
+6. **Entraînement des modèles** — régression linéaire, Random Forest et XGBoost, avec évaluation RMSE/R2/MAE.
+7. **Application web** — point d'entrée Flask minimal (placeholder) pour la future interface d'aide à la décision.
