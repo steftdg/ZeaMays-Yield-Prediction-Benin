@@ -89,3 +89,20 @@ ZeaMays-Yield-Prediction-Benin/
 5. **Feature engineering** — cumul saisonnier des précipitations, amplitude thermique, stress thermique, variable temporelle normalisée et encodage des départements.
 6. **Entraînement des modèles** — régression linéaire, Random Forest et XGBoost, avec évaluation RMSE/R2/MAE.
 7. **Application web** — point d'entrée Flask minimal (placeholder) pour la future interface d'aide à la décision.
+
+
+
+00_test_environnement.ipynb ✅
+Vérification que toutes les librairies fonctionnent correctement.
+00b_download_nasa_power.ipynb ✅
+Téléchargement automatique des données climatiques NASA POWER pour les 12 départements via API, correction des précipitations mm/jour → mm/mois, agrégation annuelle.
+01_exploratory_data_analysis.ipynb ✅
+Analyse de la qualité des données, suppression du Littoral, visualisations (boxplots, séries temporelles, matrices de corrélation), identification des variables clés.
+02_preprocessing.ipynb ✅
+Lecture et nettoyage des données de rendement, harmonisation des noms de départements, fusion avec les données climatiques → dataset_final.csv (220 lignes, 83 colonnes).
+03_feature_engineering.ipynb ✅
+Création de 31 nouvelles variables (précipitations saisonnières, amplitudes thermiques, stress thermique, tendance temporelle, encodage département) → dataset_enrichi.csv (220 lignes, 114 colonnes).
+04_model_training.ipynb ✅
+Entraînement de 7 configurations de modèles, sélection des top 30 features, meilleur modèle : Random Forest top 30 (R²=0.59, RMSE=0.21 t/ha).
+05_model_evaluation.ipynb ✅
+Comparaison visuelle, analyse des résidus, rapport d'évaluation sauvegardé.
