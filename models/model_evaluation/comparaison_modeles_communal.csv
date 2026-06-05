@@ -1,0 +1,11 @@
+Modele,RMSE_train,RMSE_test,R2_train,R2_test,MAE_test
+Régression Linéaire,0.3039,0.3359,0.4514,0.3072,0.2272
+Random Forest,0.2156,0.3264,0.7237,0.346,0.219
+XGBoost Régularisé,0.2741,0.3285,0.5537,0.3375,0.2229
+Régression Linéaire (top 30),0.331,0.3568,0.349,0.2185,0.2458
+Random Forest (top 30),0.216,0.3258,0.723,0.3484,0.2172
+XGBoost Régularisé (top 30),0.2804,0.3256,0.5329,0.3492,0.2214
+Random Forest + commune,0.1878,0.319,0.7904,0.3755,0.2119
+XGBoost + commune,0.2666,0.3235,0.5779,0.3576,0.2215
+Random Forest — anomalie,0.1904,0.2898,0.616,0.1919,0.1939
+XGBoost — anomalie,0.239,0.2944,0.3955,0.166,0.1987

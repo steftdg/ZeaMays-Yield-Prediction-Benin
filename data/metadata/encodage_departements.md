@@ -16,3 +16,15 @@ Correspondance utilisée par le LabelEncoder dans le modèle.
 | Ouémé       | 8             |
 | Plateau     | 9             |
 | Zou         | 10            |
+
+
+
+
+## Encodage types de sol
+| Type de sol          | Code numérique |
+|----------------------|---------------|
+| Autre                | 0             |
+| Ferrallitique        | 1             |
+| Ferrugineux tropical | 2             |
+| Hydromorphe          | 3             |
+| Vertisol             | 4             |
