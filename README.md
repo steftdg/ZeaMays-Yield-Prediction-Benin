@@ -1,31 +1,53 @@
 # ZeaMays-Yield-Prediction-Benin
-Système de prédiction du rendement du maïs (Zea mays) au Bénin basé sur l’apprentissage automatique, conçu comme outil d’aide à la décision pour l’agriculture.
 
-Mémoire de Licence en Informatique — Option Intelligence Artificielle  
+Système de prédiction du rendement du maïs (*Zea mays*) au Bénin basé sur 
+l'apprentissage automatique, conçu comme outil d'aide à la décision agricole.
+
+**Mémoire de Licence en Informatique — Option Intelligence Artificielle**  
 Institut de Formation et de Recherche en Informatique (IFRI) — UAC  
 Auteure : TADOGBE Trésor Steffi  
-Encadreur : Dr ZOHOU Pierre Jérôme  
+Encadreure : Ing. HODONOU Consolas  
 Année académique : 2025-2026
 
 ---
 
 ## Objectif du projet
 
-Développer un système de prédiction du rendement du maïs à l'échelle 
-départementale au Bénin, en comparant plusieurs algorithmes de machine 
-learning (régression linéaire, Random Forest, XGBoost), et déployer 
-le meilleur modèle dans une interface web d'aide à la décision agricole.
+Développer un système de prédiction du rendement du maïs à deux niveaux de 
+granularité spatiale (départemental et communal) au Bénin, en comparant 
+plusieurs algorithmes de machine learning (régression linéaire, Random Forest, 
+XGBoost), et déployer le meilleur modèle dans une interface web d'aide à la 
+décision agricole.
+
+**Meilleur modèle** : Random Forest (top 30 features) — R² = 0,59 — RMSE = 0,21 t/ha
 
 ---
 
 ## Prérequis d'installation
 
-- Python 3.13 ou plus récent avec des dépendances compatibles, ou Python 3.12 si vous voulez conserver des versions plus anciennes des bibliothèques.
-- Installer les dépendances avec `pip install -r requirements.txt` après avoir activé l'environnement virtuel.
+- Python 3.11 ou plus récent
+- Activer l'environnement virtuel puis installer les dépendances :
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Lancer l'interface web
+
+```bash
+cd app
+python app.py
+```
+
+Ouvrir ensuite `http://127.0.0.1:5000` dans le navigateur.
+
+---
 
 ## Structure du projet
 
-```
+
 ZeaMays-Yield-Prediction-Benin/
 │
 ├── README.md                          # Documentation générale du projet
@@ -34,75 +56,100 @@ ZeaMays-Yield-Prediction-Benin/
 │
 ├── data/
 │   ├── raw/                           # Données brutes originales (non modifiées)
+│   │   ├── rendement_communale.xlsx   # Rendements par commune (DSA Bénin)
+│   │   ├── rendement_départementale.xlsx
+│   │   ├── FAOSTAT_data_fr_6-1-2026.csv
+│   │   ├── climat_nasa/               # Données NASA POWER par département
+│   │   ├── climat_nasa_communal/      # Données NASA POWER par commune
+│   │   ├── limites/                   # Shapefile limites communales (IGN Bénin)
+│   │   └── pedologie/                 # Shapefile types de sols du Bénin
 │   ├── processed/                     # Données nettoyées et prêtes à l'emploi
-│   ├── predictions/                   # Résultats des prédictions
-│   └── metadata/                      # Informations sur les sources de données
+│   │   ├── dataset_final.csv          # Dataset départemental (220 obs, 83 col)
+│   │   ├── dataset_enrichi.csv        # Dataset départemental enrichi (220 obs, 114 col)
+│   │   ├── dataset_communal.csv       # Dataset communal enrichi (1515 obs, 117 col)
+│   │   ├── climat_annuel.csv
+│   │   └── moyenne_rendement_commune.csv
+│   └── metadata/                      # Documentation des sources de données
+│       ├── sources.md
+│       ├── dictionnaire_variables.md
+│       ├── encodage_departements.md
+│       └── coordonnees_communes.csv
 │
 ├── notebooks/
-│   ├── 00_test_environnement.ipynb
-│   ├── 00b_download_nasa_power.ipynb
-│   ├── 01_exploratory_data_analysis.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_feature_engineering.ipynb
-│   ├── 04_model_training.ipynb
-│   └── 05_model_evaluation.ipynb
+│   ├── 00_test_environnement.ipynb        # ✅ Test des imports et librairies
+│   ├── 00b_download_nasa_power.ipynb      # ✅ Téléchargement NASA POWER départemental
+│   ├── 00c_download_communal.ipynb        # ✅ Pipeline données communales + pédologie
+│   ├── 01_exploratory_data_analysis.ipynb # ✅ EDA et visualisations
+│   ├── 02_preprocessing.ipynb             # ✅ Nettoyage et fusion des données
+│   ├── 03_feature_engineering.ipynb       # ✅ Construction des variables
+│   ├── 04_model_training.ipynb            # ✅ Entraînement modèles départementaux
+│   ├── 04b_model_training_communal.ipynb  # ✅ Entraînement modèles communaux
+│   ├── 05_model_evaluation.ipynb          # ✅ Évaluation et comparaison
+│   └── comparaison_fao_rendement.ipynb    # ✅ Validation croisée FAO vs DSA
 │
 ├── models/
-│   ├── trained_models/                # Modèles sérialisés (.pkl, .joblib)
+│   ├── trained_models/                # Modèles sérialisés (.joblib)
+│   │   ├── random_forest.joblib       # Meilleur modèle départemental
+│   │   ├── random_forest_communal.joblib
+│   │   ├── top_features.joblib
+│   │   └── top_features_communal.joblib
 │   ├── model_evaluation/              # Rapports et métriques de performance
-│   └── hyperparameters/               # Configurations testées
+│   └── hyperparameters/               # Configurations des hyperparamètres
 │
 ├── app/                               # Interface web Flask
-│   ├── templates/                     # Fichiers HTML
-│   ├── static/                        # CSS et assets
+│   ├── templates/
+│   │   └── index.html
+│   ├── static/
+│   │   ├── style.css
+│   │   ├── script.js
+│   │   └── favicon.svg
 │   └── app.py                         # Point d'entrée de l'application
 │
-├── reports/
-│   ├── figures/                       # Graphiques et visualisations
-│   ├── tables/                        # Tableaux de résultats
-│   └── analysis_report.md             # Synthèse des analyses
-│
-└── src/                               # Fonctions réutilisables
-    ├── data_processing/
-    ├── models/
-    ├── evaluation/
-    └── utils/
-```
-
-### Description des répertoires
-
-- **data/** : Stockage de toutes les données, organisées en trois étapes : brutes, traitées et prédictions.
-- **notebooks/** : Analyses et expérimentations Jupyter suivant une progression logique numérotée.
-- **models/** : Modèles entraînés, métriques de performance et configurations d'hyperparamètres.
-- **app/** : Application web Flask pour servir le modèle en production.
-- **reports/** : Visualisations et rapports générés tout au long du projet.
-- **src/** : Modules Python réutilisables partagés entre les notebooks.
+└── reports/
+├── figures/                       # Graphiques et visualisations générés
+├── tables/                        # Tableaux de résultats
+├── analysis_report.md             # Synthèse narrative de l'EDA
+└── rapport_evaluation.md          # Rapport d'évaluation des modèles
 
 ---
 
-## Travail réalisé (résumé)
+## Résumé du travail réalisé
 
-1. **Collecte des données climatiques** — téléchargement NASA POWER (mensuel, 2003-2022) pour les 12 départements, paramètres : précipitations, températures (moyenne/max/min), humidité et rayonnement.
-2. **Prétraitement des rendements** — extraction de la feuille "Maïs", sélection des départements, conversion kg/ha -> t/ha, harmonisation des noms (ex. Atakora/Atacora, Kouffo/Couffo).
-3. **Fusion climat + rendement** — jointure par département et année, sauvegarde du dataset final dans data/processed/dataset_final.csv.
-4. **Contrôle qualité et corrections** — identification des valeurs manquantes, exclusion du Littoral, correction des précipitations (mm/jour -> mm/mois) et recalcul de l'indice de stress hydrique.
-5. **Feature engineering** — cumul saisonnier des précipitations, amplitude thermique, stress thermique, variable temporelle normalisée et encodage des départements.
-6. **Entraînement des modèles** — régression linéaire, Random Forest et XGBoost, avec évaluation RMSE/R2/MAE.
-7. **Application web** — point d'entrée Flask minimal (placeholder) pour la future interface d'aide à la décision.
+### Niveau départemental (11 départements, 2003-2022)
 
+| Notebook | Description | Résultat |
+|---|---|---|
+| `00b_download_nasa_power` | Téléchargement NASA POWER via API | 11 fichiers CSV climatiques |
+| `02_preprocessing` | Fusion rendement + climat, correction unités | `dataset_final.csv` (220 obs, 83 col) |
+| `03_feature_engineering` | 31 nouvelles variables construites | `dataset_enrichi.csv` (220 obs, 114 col) |
+| `04_model_training` | 7 configurations comparées | Random Forest top 30 : R²=0,59, RMSE=0,21 t/ha |
+| `05_model_evaluation` | Analyse résidus, visualisations | Biais moyen : -0,021 t/ha |
 
+### Niveau communal (76 communes, 2003-2022)
 
-00_test_environnement.ipynb ✅
-Vérification que toutes les librairies fonctionnent correctement.
-00b_download_nasa_power.ipynb ✅
-Téléchargement automatique des données climatiques NASA POWER pour les 12 départements via API, correction des précipitations mm/jour → mm/mois, agrégation annuelle.
-01_exploratory_data_analysis.ipynb ✅
-Analyse de la qualité des données, suppression du Littoral, visualisations (boxplots, séries temporelles, matrices de corrélation), identification des variables clés.
-02_preprocessing.ipynb ✅
-Lecture et nettoyage des données de rendement, harmonisation des noms de départements, fusion avec les données climatiques → dataset_final.csv (220 lignes, 83 colonnes).
-03_feature_engineering.ipynb ✅
-Création de 31 nouvelles variables (précipitations saisonnières, amplitudes thermiques, stress thermique, tendance temporelle, encodage département) → dataset_enrichi.csv (220 lignes, 114 colonnes).
-04_model_training.ipynb ✅
-Entraînement de 7 configurations de modèles, sélection des top 30 features, meilleur modèle : Random Forest top 30 (R²=0.59, RMSE=0.21 t/ha).
-05_model_evaluation.ipynb ✅
-Comparaison visuelle, analyse des résidus, rapport d'évaluation sauvegardé.
+| Notebook | Description | Résultat |
+|---|---|---|
+| `00c_download_communal` | NASA POWER 77 communes + type de sol | `dataset_communal.csv` (1515 obs, 117 col) |
+| `04b_model_training_communal` | 10 configurations comparées | Random Forest + commune : R²=0,38, RMSE=0,32 t/ha |
+
+### Validation croisée
+
+Écart moyen DSA Bénin vs FAOSTAT : **4,5%** sur la période 2003-2022.
+
+### Interface web
+
+Application Flask déployée localement permettant à un agent de terrain de 
+saisir département, qualité des pluies et année pour obtenir une estimation 
+du rendement avec historique des prédictions.
+
+---
+
+## Sources de données
+
+| Source | Type | URL |
+|---|---|---|
+| DSA Bénin / Open Data Bénin | Rendements agricoles | https://benin.opendataforafrica.org/qnewqoe |
+| NASA POWER | Données climatiques mensuelles | https://power.larc.nasa.gov |
+| FAOSTAT | Validation croisée nationale | https://www.fao.org/faostat |
+| IGN Bénin | Limites communales (shapefile) | Données reçues en stage |
+| Pédologie Bénin | Types de sols (shapefile) | Données reçues en stage |
