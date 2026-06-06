@@ -3,168 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prédiction du rendement du maïs — Bénin</title>
+    <title>Prévision maïs - Bénin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body>
+    <div class="app-shell">
+        <header class="topbar" aria-label="En-tête de l'application">
+            <a class="brand" href="/" aria-label="Prévision maïs - Accueil">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 28 28" role="img">
+                        <path d="M14 3.5c4.8 2.7 7.2 6.6 7.2 11.4 0 5.4-3.4 9-7.2 10.6-3.8-1.6-7.2-5.2-7.2-10.6C6.8 10.1 9.2 6.2 14 3.5Z" fill="currentColor"/>
+                        <path d="M14 8v15M9.4 12.2c2.6.2 4.1 1.6 4.6 3.8M18.6 12.2c-2.6.2-4.1 1.6-4.6 3.8M9.7 17.2c2.3.2 3.6 1.3 4.3 3.2M18.3 17.2c-2.3.2-3.6 1.3-4.3 3.2" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"/>
+                    </svg>
+                </span>
+                <span>
+                    <span class="brand-title">Prévision maïs</span>
+                    <span class="brand-subtitle">Bénin</span>
+                </span>
+            </a>
 
-    <header>
-        <div class="header-content">
-            <h1>🌽 Prédiction du rendement du maïs au Bénin</h1>
-            <p>Outil d'aide à la décision agricole — IFRI / UAC 2025-2026</p>
-        </div>
-    </header>
-
-    <main>
-        <div class="container">
-
-            <!-- FORMULAIRE -->
-            <div class="card formulaire">
-                <h2>Paramètres de votre zone</h2>
-                <p class="sous-titre">Renseignez les informations ci-dessous pour obtenir une estimation du rendement attendu.</p>
-
-                <div class="champ">
-                    <label for="departement">Département</label>
-                    <select id="departement">
-                        <option value="">-- Choisissez un département --</option>
-                        {% for dept in departements %}
-                        <option value="{{ dept }}">{{ dept }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="champ">
-                    <label for="qualite_pluie">Qualité des pluies cette saison</label>
-                    <select id="qualite_pluie">
-                        <option value="Très mauvaise">Très mauvaise — sécheresse marquée</option>
-                        <option value="Mauvaise">Mauvaise — déficit pluviométrique</option>
-                        <option value="Normale" selected>Normale — saison habituelle</option>
-                        <option value="Bonne">Bonne — pluies abondantes</option>
-                        <option value="Très bonne">Très bonne — excellente pluviométrie</option>
-                    </select>
-                </div>
-
-                <div class="champ">
-                    <label for="annee">Année de la campagne</label>
-                    <input type="number" id="annee" value="2024" min="2003" max="2030">
-                </div>
-
-                <button id="btn-predire" onclick="predire()">
-                    Estimer le rendement
-                </button>
+            <div class="topbar-meta" aria-label="Informations modèle">
+                <span>Random Forest</span>
+                <span>R² 0.59</span>
+                <span>RMSE 0.21 t/ha</span>
             </div>
+        </header>
 
-            <!-- RESULTAT -->
-            <div class="card resultat" id="resultat" style="display:none;">
-                <h2>Résultat de la prédiction</h2>
-
-                <div class="rendement-affichage" id="rendement-affichage">
-                    <div class="rendement-valeur" id="rendement-valeur">--</div>
-                    <div class="rendement-unite">tonnes / hectare</div>
+        <main class="workspace">
+            <section class="intro-panel" aria-labelledby="page-title">
+                <div class="intro-copy">
+                    <h1 id="page-title">Estimer le rendement du maïs par département</h1>
+                    <p>Une lecture rapide des conditions de campagne à partir du modèle entraîné sur les données agricoles et climatiques 2003-2022.</p>
                 </div>
+                <div class="signal-strip" aria-label="Variables clés">
+                    <span>Humidité de mai</span>
+                    <span>Rayonnement annuel</span>
+                    <span>Pluie saisonnière</span>
+                </div>
+            </section>
 
-                <div class="badge-niveau" id="badge-niveau">--</div>
-
-                <div class="stats-row">
-                    <div class="stat-box">
-                        <div class="stat-label">Moyenne historique</div>
-                        <div class="stat-valeur" id="stat-moyenne">--</div>
-                        <div class="stat-unite">t/ha</div>
+            <section class="main-grid" aria-label="Espace de prédiction">
+                <form class="panel form-panel" id="prediction-form" novalidate>
+                    <div class="panel-heading">
+                        <div>
+                            <p class="section-label">Paramètres</p>
+                            <h2>Campagne agricole</h2>
+                        </div>
+                        <button class="ghost-icon-button" type="button" id="reset-form" aria-label="Réinitialiser">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M5 12a7 7 0 1 0 2.05-4.95L5 9.1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9"/>
+                                <path d="M5 4.7V9.1h4.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9"/>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-label">Écart à la moyenne</div>
-                        <div class="stat-valeur" id="stat-ecart">--</div>
-                        <div class="stat-unite">%</div>
+
+                    <div class="field-group">
+                        <label for="departement-value">Département</label>
+                        <div class="custom-select" data-select>
+                            <input type="hidden" id="departement-value" name="departement" value="">
+                            <button class="select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                                <span data-select-label>Choisir un département</span>
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                </svg>
+                            </button>
+                            <div class="select-menu" role="listbox" tabindex="-1">
+                                {% for dept in departements %}
+                                <button type="button" role="option" data-value="{{ dept }}">{{ dept }}</button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="field-error" id="departement-error" aria-live="polite"></p>
                     </div>
+
+                    <fieldset class="field-group">
+                        <legend>Qualité des pluies</legend>
+                        <div class="rainfall-options" role="radiogroup" aria-label="Qualité des pluies">
+                            <label class="rain-option">
+                                <input type="radio" name="qualite_pluie" value="Très mauvaise">
+                                <span>
+                                    <strong>Très mauvaise</strong>
+                                    <small>Sécheresse marquée</small>
+                                </span>
+                            </label>
+                            <label class="rain-option">
+                                <input type="radio" name="qualite_pluie" value="Mauvaise">
+                                <span>
+                                    <strong>Mauvaise</strong>
+                                    <small>Déficit notable</small>
+                                </span>
+                            </label>
+                            <label class="rain-option">
+                                <input type="radio" name="qualite_pluie" value="Normale" checked>
+                                <span>
+                                    <strong>Normale</strong>
+                                    <small>Saison habituelle</small>
+                                </span>
+                            </label>
+                            <label class="rain-option">
+                                <input type="radio" name="qualite_pluie" value="Bonne">
+                                <span>
+                                    <strong>Bonne</strong>
+                                    <small>Pluies abondantes</small>
+                                </span>
+                            </label>
+                            <label class="rain-option">
+                                <input type="radio" name="qualite_pluie" value="Très bonne">
+                                <span>
+                                    <strong>Très bonne</strong>
+                                    <small>Excellente saison</small>
+                                </span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div class="field-group">
+                        <label for="annee">Année de campagne</label>
+                        <div class="number-control">
+                            <button type="button" data-year-step="-1" aria-label="Année précédente">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                                </svg>
+                            </button>
+                            <input type="number" id="annee" name="annee" value="2024" min="2003" max="2030" inputmode="numeric">
+                            <button type="button" data-year-step="1" aria-label="Année suivante">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="primary-button" id="btn-predire" type="submit">
+                        <span>Estimer le rendement</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <section class="panel result-panel" aria-labelledby="result-title">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="section-label">Résultat</p>
+                            <h2 id="result-title">Prévision</h2>
+                        </div>
+                        <button class="secondary-button compact" type="button" id="new-prediction">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                            </svg>
+                            <span>Nouvelle prédiction</span>
+                        </button>
+                    </div>
+
+                    <div class="empty-state" id="empty-state">
+                        <div class="empty-visual" aria-hidden="true">
+                            <svg viewBox="0 0 160 120">
+                                <path d="M20 89c24-15 47-16 70-3 19 10 32 7 50-7" fill="none" stroke="#a3b18a" stroke-linecap="round" stroke-width="6"/>
+                                <path d="M31 72c22-10 43-9 63 2 16 9 31 7 47-3" fill="none" stroke="#d4a72c" stroke-linecap="round" stroke-width="5"/>
+                                <path d="M79 24c13 8 20 19 20 33 0 16-9 27-20 32-11-5-20-16-20-32 0-14 7-25 20-33Z" fill="#1f7a4d"/>
+                                <path d="M79 40v45M66 53c8 1 12 5 13 12M92 53c-8 1-12 5-13 12M67 68c7 1 11 4 12 10M91 68c-7 1-11 4-12 10" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3"/>
+                            </svg>
+                        </div>
+                        <p>Choisissez un département, ajustez la pluie et lancez une estimation.</p>
+                    </div>
+
+                    <div class="result-content" id="result-content" hidden>
+                        <div class="score-card" id="score-card">
+                            <div class="score-meta">
+                                <span class="level-badge" id="badge-niveau">Normal</span>
+                                <span id="result-context">-</span>
+                            </div>
+                            <div class="score-main">
+                                <span id="rendement-valeur">--</span>
+                                <small>t/ha</small>
+                            </div>
+                            <div class="score-scale" aria-hidden="true">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <span>Moyenne historique</span>
+                                <strong id="stat-moyenne">--</strong>
+                                <small>t/ha</small>
+                            </div>
+                            <div class="stat-card">
+                                <span>Écart à la moyenne</span>
+                                <strong id="stat-ecart">--</strong>
+                                <small>%</small>
+                            </div>
+                        </div>
+
+                        <div class="advice-box">
+                            <span class="advice-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 3a6.5 6.5 0 0 0-3.6 11.9c.5.3.8.8.8 1.4V17h7.6v-.7c0-.6.3-1.1.8-1.4A6.5 6.5 0 0 0 12 3Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                                    <path d="M9.5 20h5M10 17h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+                                </svg>
+                            </span>
+                            <p id="conseil-texte">--</p>
+                        </div>
+                    </div>
+
+                    <div class="error-box" id="erreur-box" hidden>
+                        <strong>Erreur</strong>
+                        <p id="erreur-texte">Une erreur est survenue.</p>
+                    </div>
+                </section>
+            </section>
+
+            <section class="history-panel" aria-labelledby="history-title">
+                <div class="history-heading">
+                    <div>
+                        <p class="section-label">Historique</p>
+                        <h2 id="history-title">Dernières prédictions</h2>
+                    </div>
+                    <button class="secondary-button compact" id="clear-history" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+                        </svg>
+                        <span>Effacer</span>
+                    </button>
                 </div>
+                <div class="history-empty" id="history-empty">Aucune prédiction enregistrée pour le moment.</div>
+                <div class="history-list" id="history-list" aria-live="polite"></div>
+            </section>
+        </main>
 
-                <div class="conseil-box" id="conseil-box">
-                    <div class="conseil-titre">💡 Conseil pratique</div>
-                    <div class="conseil-texte" id="conseil-texte">--</div>
-                </div>
-
-                <div class="disclaimer">
-                    ⚠️ Cette estimation est basée sur des données historiques climatiques.
-                    Elle ne remplace pas l'expertise d'un conseiller agricole.
-                </div>
-            </div>
-
-            <!-- ERREUR -->
-            <div class="card erreur" id="erreur-box" style="display:none;">
-                <p id="erreur-texte">Une erreur est survenue.</p>
-            </div>
-
-        </div>
-    </main>
-
-    <footer>
-        <p>Développé par TADOGBE Trésor Steffi — Licence IA, IFRI-UAC — 2025-2026</p>
-        <p>Modèle : Random Forest | R² = 0.59 | RMSE = 0.21 t/ha</p>
-    </footer>
-
-    <script>
-        async function predire() {
-            const departement  = document.getElementById("departement").value;
-            const qualite_pluie = document.getElementById("qualite_pluie").value;
-            const annee        = document.getElementById("annee").value;
-
-            // Validation
-            if (!departement) {
-                alert("Veuillez choisir un département.");
-                return;
-            }
-
-            // Afficher chargement
-            const btn = document.getElementById("btn-predire");
-            btn.textContent = "Calcul en cours...";
-            btn.disabled = true;
-
-            document.getElementById("resultat").style.display = "none";
-            document.getElementById("erreur-box").style.display = "none";
-
-            try {
-                const response = await fetch("/predire", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ departement, qualite_pluie, annee })
-                });
-
-                const data = await response.json();
-
-                if (data.succes) {
-                    // Remplir les résultats
-                    document.getElementById("rendement-valeur").textContent = data.rendement.toFixed(2);
-
-                    const badge = document.getElementById("badge-niveau");
-                    badge.textContent = data.niveau;
-                    badge.style.background = data.couleur;
-
-                    const affichage = document.getElementById("rendement-affichage");
-                    affichage.style.borderColor = data.couleur;
-
-                    document.getElementById("stat-moyenne").textContent = data.moyenne_historique.toFixed(2);
-
-                    const ecart = document.getElementById("stat-ecart");
-                    ecart.textContent = (data.ecart_pct > 0 ? "+" : "") + data.ecart_pct;
-                    ecart.style.color = data.ecart_pct >= 0 ? "#27ae60" : "#e74c3c";
-
-                    document.getElementById("conseil-texte").textContent = data.conseil;
-
-                    document.getElementById("resultat").style.display = "block";
-                } else {
-                    document.getElementById("erreur-texte").textContent = "Erreur : " + data.erreur;
-                    document.getElementById("erreur-box").style.display = "block";
-                }
-
-            } catch (err) {
-                document.getElementById("erreur-texte").textContent = "Erreur de connexion au serveur.";
-                document.getElementById("erreur-box").style.display = "block";
-            }
-
-            btn.textContent = "Estimer le rendement";
-            btn.disabled = false;
-        }
-    </script>
-
+        <footer class="footer">
+            <span>IFRI / UAC 2025-2026</span>
+            <span>Modèle d'aide à la décision agricole</span>
+            <span>Données 2003-2022</span>
+        </footer>
+    </div>
 </body>
 </html>

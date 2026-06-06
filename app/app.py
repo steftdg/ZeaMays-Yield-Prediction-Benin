@@ -33,6 +33,10 @@ QUALITE_PLUIE = {
 def index():
     return render_template("index.html", departements=DEPARTEMENTS)
 
+@app.route("/favicon.ico")
+def favicon():
+    return app.send_static_file("favicon.svg")
+
 @app.route("/predire", methods=["POST"])
 def predire():
     try:
