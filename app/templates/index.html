@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédiction du rendement du maïs — Bénin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <h1>🌽 Prédiction du rendement du maïs au Bénin</h1>
+            <p>Outil d'aide à la décision agricole — IFRI / UAC 2025-2026</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+
+            <!-- FORMULAIRE -->
+            <div class="card formulaire">
+                <h2>Paramètres de votre zone</h2>
+                <p class="sous-titre">Renseignez les informations ci-dessous pour obtenir une estimation du rendement attendu.</p>
+
+                <div class="champ">
+                    <label for="departement">Département</label>
+                    <select id="departement">
+                        <option value="">-- Choisissez un département --</option>
+                        {% for dept in departements %}
+                        <option value="{{ dept }}">{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="champ">
+                    <label for="qualite_pluie">Qualité des pluies cette saison</label>
+                    <select id="qualite_pluie">
+                        <option value="Très mauvaise">Très mauvaise — sécheresse marquée</option>
+                        <option value="Mauvaise">Mauvaise — déficit pluviométrique</option>
+                        <option value="Normale" selected>Normale — saison habituelle</option>
+                        <option value="Bonne">Bonne — pluies abondantes</option>
+                        <option value="Très bonne">Très bonne — excellente pluviométrie</option>
+                    </select>
+                </div>
+
+                <div class="champ">
+                    <label for="annee">Année de la campagne</label>
+                    <input type="number" id="annee" value="2024" min="2003" max="2030">
+                </div>
+
+                <button id="btn-predire" onclick="predire()">
+                    Estimer le rendement
+                </button>
+            </div>
+
+            <!-- RESULTAT -->
+            <div class="card resultat" id="resultat" style="display:none;">
+                <h2>Résultat de la prédiction</h2>
+
+                <div class="rendement-affichage" id="rendement-affichage">
+                    <div class="rendement-valeur" id="rendement-valeur">--</div>
+                    <div class="rendement-unite">tonnes / hectare</div>
+                </div>
+
+                <div class="badge-niveau" id="badge-niveau">--</div>
+
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="stat-label">Moyenne historique</div>
+                        <div class="stat-valeur" id="stat-moyenne">--</div>
+                        <div class="stat-unite">t/ha</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Écart à la moyenne</div>
+                        <div class="stat-valeur" id="stat-ecart">--</div>
+                        <div class="stat-unite">%</div>
+                    </div>
+                </div>
+
+                <div class="conseil-box" id="conseil-box">
+                    <div class="conseil-titre">💡 Conseil pratique</div>
+                    <div class="conseil-texte" id="conseil-texte">--</div>
+                </div>
+
+                <div class="disclaimer">
+                    ⚠️ Cette estimation est basée sur des données historiques climatiques.
+                    Elle ne remplace pas l'expertise d'un conseiller agricole.
+                </div>
+            </div>
+
+            <!-- ERREUR -->
+            <div class="card erreur" id="erreur-box" style="display:none;">
+                <p id="erreur-texte">Une erreur est survenue.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>Développé par TADOGBE Trésor Steffi — Licence IA, IFRI-UAC — 2025-2026</p>
+        <p>Modèle : Random Forest | R² = 0.59 | RMSE = 0.21 t/ha</p>
+    </footer>
+
+    <script>
+        async function predire() {
+            const departement  = document.getElementById("departement").value;
+            const qualite_pluie = document.getElementById("qualite_pluie").value;
+            const annee        = document.getElementById("annee").value;
+
+            // Validation
+            if (!departement) {
+                alert("Veuillez choisir un département.");
+                return;
+            }
+
+            // Afficher chargement
+            const btn = document.getElementById("btn-predire");
+            btn.textContent = "Calcul en cours...";
+            btn.disabled = true;
+
+            document.getElementById("resultat").style.display = "none";
+            document.getElementById("erreur-box").style.display = "none";
+
+            try {
+                const response = await fetch("/predire", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ departement, qualite_pluie, annee })
+                });
+
+                const data = await response.json();
+
+                if (data.succes) {
+                    // Remplir les résultats
+                    document.getElementById("rendement-valeur").textContent = data.rendement.toFixed(2);
+
+                    const badge = document.getElementById("badge-niveau");
+                    badge.textContent = data.niveau;
+                    badge.style.background = data.couleur;
+
+                    const affichage = document.getElementById("rendement-affichage");
+                    affichage.style.borderColor = data.couleur;
+
+                    document.getElementById("stat-moyenne").textContent = data.moyenne_historique.toFixed(2);
+
+                    const ecart = document.getElementById("stat-ecart");
+                    ecart.textContent = (data.ecart_pct > 0 ? "+" : "") + data.ecart_pct;
+                    ecart.style.color = data.ecart_pct >= 0 ? "#27ae60" : "#e74c3c";
+
+                    document.getElementById("conseil-texte").textContent = data.conseil;
+
+                    document.getElementById("resultat").style.display = "block";
+                } else {
+                    document.getElementById("erreur-texte").textContent = "Erreur : " + data.erreur;
+                    document.getElementById("erreur-box").style.display = "block";
+                }
+
+            } catch (err) {
+                document.getElementById("erreur-texte").textContent = "Erreur de connexion au serveur.";
+                document.getElementById("erreur-box").style.display = "block";
+            }
+
+            btn.textContent = "Estimer le rendement";
+            btn.disabled = false;
+        }
+    </script>
+
+</body>
+</html>
